@@ -29,6 +29,17 @@ An experimental driven Search Engine Project developed to index and retrive best
       - [ ] Experimentation
   
   
+$$ Future works
+
+TODO
+  
+## How to run Project
+
+TODO
+
+
+
+
 ## Contributors
 
 - [Mohammed Ataaur Rahaman](https://github.com/ataago)

@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-    File Handlers.
+    Main file for search engine
 
     Author : TF4ces
 """

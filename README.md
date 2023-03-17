@@ -16,17 +16,17 @@ An experimental driven Search Engine Project developed to index and retrive best
  
 ## Project Plan
 
-  - Phase 1
-    - Data Analysis & Pipeline
-    - Model Pipeline
-    - Evaluation Pipeline
-  - Phase 2
-    - BM25 Model + BERT Model
-    - Hyperparameter tuning
-    - Ensemble Pipeline
-  - Phase 3
-    - ColBERT Model
-    - Experimentation
+ - [ ] Phase 1
+      - [ ] Data Analysis & Pipeline
+      - [ ] Model Pipeline
+      - [ ] Evaluation Pipeline
+ - [ ] Phase 2
+      - [ ] BM25 Model + BERT Model
+      - [ ] Hyperparameter tuning
+      - [ ] Ensemble Pipeline
+ - [ ] Phase 3
+      - [ ] ColBERT Model
+      - [ ] Experimentation
   
   
 ## Contributors

@@ -1,6 +1,6 @@
 # TF4ces Search Engine
 
-An experimental driven Search Engine Project developed to index and retrive best documents given a query using ensemble of models. 
+An experiment driven Search Engine Project, developed to index and retrive best documents given a query using ensemble of models. 
 
 
 ## Architecture Diagram

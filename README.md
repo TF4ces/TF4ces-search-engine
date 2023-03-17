@@ -35,8 +35,22 @@ TODO
   
 ## How to run Project
 
-TODO
-
+1. Clone repository
+    ```console
+    $ git clone https://github.com/TF4ces/TF4ces-search-engine.git
+    ```
+    
+2. Setup Environment repository
+    ```console
+    $ python3 -m venv venv
+    $ source venv/bin/activate
+    $ pip -r requirements.txt
+    ```
+    
+3. Run TF4ces Search Engine
+  ```console
+    TODO
+    ```
 
 
 

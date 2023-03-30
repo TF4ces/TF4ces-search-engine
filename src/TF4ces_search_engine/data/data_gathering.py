@@ -26,6 +26,7 @@ class DataGathering():
         # else:
         #     path = self.dataset_type+'/'+dataset_category+'/'+dataset_split+'/'+self.base_dataset_dir
 
+        # lotte/lifestyle/dev/search
         path = self.dataset_type + '/' + dataset_category + '/' + dataset_split + '/' + self.base_dataset_dir
         data = ir_datasets.load(path)
         documents = {}

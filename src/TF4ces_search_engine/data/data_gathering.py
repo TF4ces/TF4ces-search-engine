@@ -12,16 +12,21 @@ import ir_datasets
 
 class DataGathering():
 
-    def __init__(self, dataset_type = "lotte", base_dataset_dir = None):
+    def __init__(self, dataset_type="lotte", base_dataset_dir="search"):
         '''base_dataset_dir : forum or search'''
         self.dataset_type = dataset_type
         self.base_dataset_dir = base_dataset_dir
 
     
-    def lotte_documents(self, dataset_category = "lifestyle", dataset_split = "dev"):
+    def lotte_documents(self,dataset_category="lifestyle",dataset_split="dev"):
         # raise NotImplementedError
-        #TODO return dict
-        path = self.dataset_type + '/' + dataset_category + '/' + dataset_split + self.base_dataset_dir
+        # TODO return dict
+        # if self.base_dataset_dir is None:
+        #     path = self.dataset_type+'/'+dataset_category+'/'+dataset_split
+        # else:
+        #     path = self.dataset_type+'/'+dataset_category+'/'+dataset_split+'/'+self.base_dataset_dir
+
+        path = self.dataset_type + '/' + dataset_category + '/' + dataset_split + '/' + self.base_dataset_dir
         data = ir_datasets.load(path)
         documents = {}
         for doc_id, doc in data.docs_iter():
@@ -30,18 +35,25 @@ class DataGathering():
         return documents
 
         
-    def lotte_queries(self, dataset_split="dev", dataset_category=None):
+    def lotte_queries(self,dataset_category="lifestyle",dataset_split="dev"):
         # raise NotImplementedError
-        #TODO return dict
-        path = self.dataset_type + '/' + dataset_category + '/' + dataset_split + self.base_dataset_dir
+        # TODO return dict
+        # if self.base_dataset_dir==None:
+        #     # print("Error: Base Directory not mentioned")
+        #     break
+
+
+        path = self.dataset_type+'/'+dataset_category+'/'+dataset_split+'/'+self.base_dataset_dir
+
         data = ir_datasets.load(path)
+
         queries = {}
         for q_id, query in data.queries_iter():
             queries[q_id] = query
 
         return queries
         
-    def get_documents(self, dataset_split="train", dataset_category=None):
+    def get_documents(self, dataset_category="lifestyle", dataset_split="dev"):
         """
         Help get documents as a Dict.
         
@@ -61,12 +73,12 @@ class DataGathering():
         """
         
         if self.dataset_type == "lotte":
-            return self.lotte_documents(dataset_split="train", dataset_category=None)
+            return self.lotte_documents(dataset_category="lifestyle", dataset_split="dev")
         
         else: 
             raise Exception(f"unknown dataset_type given: {self.dataset_type}")
 
-    def get_queries(self, dataset_split="train", dataset_category=None):
+    def get_queries(self, dataset_category="lifestyle", dataset_split="dev"):
         """
         Help get queries as a Dict.
         
@@ -85,8 +97,7 @@ class DataGathering():
             }
         """
         if self.dataset_type == "lotte":
-            return self.lotte_queries(dataset_split="train", dataset_category=None)
+            return self.lotte_queries(dataset_category="lifestyle", dataset_split="dev")
         
         else: 
             raise Exception(f"unknown dataset_type given: {self.dataset_type}")
-

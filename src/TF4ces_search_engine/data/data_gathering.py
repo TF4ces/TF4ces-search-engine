@@ -28,7 +28,7 @@ class DataGathering():
 
         # Step 1 : Load dataset
         dataset_name = Path(self.dataset_name) / dataset_category / dataset_split
-        data = ir_datasets.load(str(dataset_name))
+        data = ir_datasets.load(str(dataset_name.as_posix()))
 
         # Step 2 : Get Documents
         documents = {}
@@ -48,7 +48,7 @@ class DataGathering():
             tmp_query_mappings = dict()
 
             dataset_name = Path(self.dataset_name) / dataset_category / dataset_split / query_source
-            data = ir_datasets.load(str(dataset_name))
+            data = ir_datasets.load(str(dataset_name.as_posix()))
 
             for q_id, query in data.queries_iter():
                 tmp_query_mappings[q_id] = q_idx

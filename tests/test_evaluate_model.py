@@ -1,116 +1,93 @@
-from src.TF4ces_search_engine.data.data_gathering import DataGathering
-from src.TF4ces_search_engine.feature.data_preprocessing import Preprocessing
-from src.TF4ces_search_engine.model.tf_idf import Tfidf
-from src.TF4ces_search_engine.model.bm25 import BM25
+#!/usr/bin/env python3
+# encoding: utf-8
 
+"""
+    Main test script to test and eval model.
+
+    Author : TF4ces
+"""
+
+
+# Native imports
 import itertools
+
+# Third-party imports
 import numpy as np
+
+# User imports
+from config.conf import __WORKSPACE__
+from src.TF4ces_search_engine.data.data_gathering import DataGathering
+from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessing
+from src.TF4ces_search_engine.model.tf_idf import Tfidf, TFIDF
+from src.TF4ces_search_engine.model.bm25 import BM25, FastBM25
+from src.utils.evalutor import mean_recall_K, mean_precision_K
+
 
 if __name__ == '__main__':
 
-    model = "bm25"
+    TOP_N = 100  # Retrieve top 5 documents for each query.
+    K = 10
 
+    VERSION = 'v0.0.1'  #v0.0.1-small
+    TEST_RUN = False
+
+    # Pre-processing configs
+    USE_CACHE = True
+    PREPROCESS_CACHE_DIR = __WORKSPACE__ / "dataset" / "preprocessed" / f"test_{VERSION}"  # pre processed data is stored here.
+
+    # Model configs
+    MODEL = "bm25" # tfidf, bm25
+    MODEL_PATH = __WORKSPACE__ / "models" / f"{MODEL}" / f"{MODEL}.{VERSION}.pkl"
+
+
+
+    # Data Gathering
     data_gathering = DataGathering(dataset_name="lotte",)
-
     docs = data_gathering.get_documents(dataset_category="lifestyle", dataset_split="dev")
     queries = data_gathering.get_queries(dataset_category="lifestyle", dataset_split="dev")
 
-    dp = Preprocessing()
+    if TEST_RUN:
+        docs = dict(itertools.islice(docs.items(), 1_000, 3_000))
+        queries = dict(itertools.islice(queries.items(), 1_000))
 
+
+    # Data Preprocessing
     print("Preprocessing in Progress...")
-    docs, queries = dp.pre_process(docs, queries, model)
-
-    top_n = 5  # Retrieve top 5 documents for each query.
-    print("TFIDF: Retrieving top 5 documents...")
-
-    if model == "tfidf":
-        tfidf = Tfidf()
-        query_keys, retrieved_id = tfidf.retrieve_documents(docs, queries, top_n)
-
-    if model == "bm25":
-        bm25 = BM25()
-        query_keys, retrieved_id = bm25.retrieve_documents(docs, queries, top_n)
-
-    original_id = []
-    for key in queries:
-        for inner_key in queries[key]:
-            if inner_key == "rel_doc_ids":
-                original_id.append(queries[key][inner_key])
-
-    # Calculate performance for retrieved documents
-    original_n = len(original_id)
-    retrieved_n = len(retrieved_id)
-
-    # Create an empty confusion matrix
-    confusion_matrix = np.zeros((original_n, retrieved_n))
-
-    # Populate the confusion matrix
-    for i in range(original_n):
-        for j in range(retrieved_n):
-            intersection = set(original_id[i]).intersection(set(retrieved_id[j]))
-            if intersection:
-                confusion_matrix[i, j] = len(intersection)/len(set(original_id[i]))
-            else:
-                confusion_matrix[i, j] = 0
-
-    # Print the confusion matrix
-    TP = np.diag(confusion_matrix)
-    FP = np.sum(confusion_matrix, axis=0) - TP
-    FN = np.sum(confusion_matrix, axis=1) - TP
-    TN = np.sum(confusion_matrix) - (TP + FP + FN)
-
-    # Calculate precision, recall, and F1-score
-
-    def precision(TP, FP):
-        result = []
-        for i in range(len(TP)):
-            if TP[i] + FP[i] == 0:
-                result.append(0)
-            else:
-                result.append(TP[i] / (TP[i] + FP[i]))
-        return result
+    data_preprocessing = DataPreprocessing(cache_dir=PREPROCESS_CACHE_DIR)
+    docs, queries = data_preprocessing.pre_process(docs=docs, queries=queries, model_type=MODEL, use_cache=USE_CACHE)
 
 
-    def recall(TP, FN):
-        result = []
-        for i in range(len(TP)):
-            if TP[i] + FN[i] == 0:
-                result.append(0)
-            else:
-                result.append(TP[i] / (TP[i] + FN[i]))
-        return result
+    print(f"Retrieving top {TOP_N} for queries({len(queries)}) documents({len(docs)})...")
+    if MODEL == "tfidf":
+        RETRAIN = False
+
+        model = TFIDF(model_path=MODEL_PATH, retrain=RETRAIN)
+        pred_queries = model.retrieve_documents(
+            docs_obj=docs,
+            queries_obj=queries,
+            top_n=TOP_N,
+            train=RETRAIN,
+        )
+
+    if MODEL == "bm25":
+        bm25 = FastBM25(model_path=MODEL_PATH, retrain=True)
+        pred_queries = bm25.retrieve_documents(
+            docs_obj=docs,
+            queries_obj=queries,
+            top_n=TOP_N,
+            train=True,
+        )
 
 
-    def f1_score(precision_vals, recall_vals):
-        result = []
-        for i in range(len(precision_vals)):
-            precision_val = precision_vals[i]
-            recall_val = recall_vals[i]
-            if precision_val + recall_val == 0:
-                result.append(0)
-            else:
-                result.append(2 * precision_val * recall_val / (precision_val + recall_val))
-        return result
+    # Evaluation
+    print("Evaluation...")
+    q_ids, gold_doc_ids, pred_doc_ids = zip(*pred_queries)
+    recall_k = mean_recall_K(golds=gold_doc_ids, preds=pred_doc_ids, k=K)
+    precision_k = mean_precision_K(golds=gold_doc_ids, preds=pred_doc_ids, k=K)
 
-    precision_vals = precision(TP, FP)
-    recall_vals = recall(TP, FN)
-    f1_vals = f1_score(precision_vals, recall_vals)
+    print(f"Recall@{K} : {recall_k}")
+    print(f"Precision@{K} : {precision_k}")
 
-    # Print the results
-    print("Precision:", precision_vals)
-    print("Recall:", recall_vals)
-    print("F1-score:", f1_vals)
-    print()
-    print("Average Precision:", np.average(precision_vals))
-    print("Average Recall:", np.average(recall_vals))
-    print("Average F1-score:", np.average(f1_vals))
+    print(f"Sample Doc Ids\nGold: {gold_doc_ids[:5]}\nPred: {pred_doc_ids[:5]}")
 
-
-
-
-
-
-
-
-
-
+    print("DONE")

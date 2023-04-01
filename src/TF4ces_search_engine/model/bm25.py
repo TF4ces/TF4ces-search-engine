@@ -79,8 +79,8 @@ class FastBM25(BM25):
     def init_model(docs):
         return fastbm25(corpus=docs)
 
-    def get_scores(self, query):
-        pred = self.bm25.top_k_sentence(query, k=5)
+    def get_scores(self, query, top_n):
+        pred = self.bm25.top_k_sentence(query, k=top_n)
 
         # If no prediction return empty set.
         if len(pred) == 0:
@@ -101,7 +101,7 @@ class FastBM25(BM25):
         # Step 2 : Get relevant docs
         relevant_doc_ids = list()
         for query_id, query in tqdm(zip(query_ids, queries), total=len(query_ids), desc=f"Prediction"):
-            rel_doc_ids_ = self.get_scores(query)
+            rel_doc_ids_ = self.get_scores(query=query, top_n=top_n)
             relevant_doc_ids.append(np.array(rel_doc_ids_))
 
         return (

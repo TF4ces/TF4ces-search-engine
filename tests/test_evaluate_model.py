@@ -18,15 +18,15 @@ import numpy as np
 from config.conf import __WORKSPACE__
 from src.TF4ces_search_engine.data.data_gathering import DataGathering
 from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessing
-from src.TF4ces_search_engine.model.tf_idf import Tfidf, TFIDF
+from src.TF4ces_search_engine.model.tf_idf import TFIDF
 from src.TF4ces_search_engine.model.bm25 import BM25, FastBM25
 from src.utils.evalutor import mean_recall_K, mean_precision_K
 
 
 if __name__ == '__main__':
 
-    TOP_N = 100  # Retrieve top 5 documents for each query.
-    K = 10
+    TOP_N = 5  # Retrieve top N documents for each query.
+    K = 5
 
     VERSION = 'v0.0.1'  #v0.0.1-small
     TEST_RUN = False

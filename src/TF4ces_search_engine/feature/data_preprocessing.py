@@ -2,20 +2,44 @@
 # encoding: utf-8
 
 """
-    File Handlers.
+    Data pre-processing
 
     Author : TF4ces
 """
 
-from src.TF4ces_search_engine.feature import config_preprocessing
-import nltk
-nltk.download('stopwords', quiet=True)
-nltk.download('punkt', quiet=True)
+
+# Native imports
 import re
 import string
-from nltk.stem import WordNetLemmatizer
+import pickle
 
-class Preprocessing():
+# Third-party imports
+import nltk
+from nltk.stem import WordNetLemmatizer
+from tqdm.auto import tqdm
+
+# User imports
+from config.conf import __WORKSPACE__
+from src.TF4ces_search_engine.feature import config_preprocessing
+from src.utils.file_handlers import delete_dir
+
+
+class DataPreprocessing():
+
+    def __init__(
+            self,
+            cache_dir=__WORKSPACE__ / "dataset" / "preprocessed" / "test"
+    ):
+
+        self.cache_dir = cache_dir
+        self.cache_doc_file = self.cache_dir / "docs.preprocessed.pkl"
+        self.cache_query_file = self.cache_dir / "queries.preprocessed.pkl"
+
+        # download required nltk
+        nltk.download('stopwords', quiet=True)
+        nltk.download('punkt', quiet=True)
+        nltk.download('wordnet', quiet=True)
+
     def text2int(self, textnum, numwords={}):
         if not numwords:
             units = [
@@ -103,65 +127,61 @@ class Preprocessing():
     def apply_lemmatization(self, tokens, wnl=WordNetLemmatizer()):
         return [wnl.lemmatize(token) for token in tokens]
 
-
     def switches(self, text, preprocessing_switches, model_type):
         """ Technique which will apply the techniques if they are set to
         True in the global dict ::preprocessing_switches::
         """
+        if preprocessing_switches["convert_usernames"]:
+            text = re.sub("@[a-zA-Z0-9:.]+", "@username", text)
+        if preprocessing_switches["convert_number_words_to_digits"]:
+            text = self.text2int(text)
+        tokens = self.tokenize_text(text, preprocessing_switches)
+        if preprocessing_switches["remove_punctuation"]:
+            tokens = self.remove_characters_after_tokenization(tokens)
+        if preprocessing_switches["convert_to_lowercase"]:
+            tokens = self.convert_to_lowercase(tokens)
+        if preprocessing_switches["remove_stopwords"]:
+            tokens = self.remove_stopwords(tokens)
+        if preprocessing_switches["apply_lemmatization"]:
+            tokens = self.apply_lemmatization(tokens)
 
         if model_type == "tfidf":
-            if preprocessing_switches["convert_usernames"]:
-                text = re.sub("@[a-zA-Z0-9:.]+", "@username", text)
-            if preprocessing_switches["convert_number_words_to_digits"]:
-                text = self.text2int(text)
-            tokens = self.tokenize_text(text, preprocessing_switches)
-            if preprocessing_switches["remove_punctuation"]:
-                tokens = self.remove_characters_after_tokenization(tokens)
-            if preprocessing_switches["convert_to_lowercase"]:
-                tokens = self.convert_to_lowercase(tokens)
-            if preprocessing_switches["remove_stopwords"]:
-                tokens = self.remove_stopwords(tokens)
-            if preprocessing_switches["apply_lemmatization"]:
-                tokens = self.apply_lemmatization(tokens)
-
             return " ".join(tokens)
 
-        if model_type == "bm25":
-            if preprocessing_switches["convert_usernames"]:
-                text = re.sub("@[a-zA-Z0-9:.]+", "@username", text)
-            if preprocessing_switches["convert_number_words_to_digits"]:
-                text = self.text2int(text)
-            tokens = self.tokenize_text(text, preprocessing_switches)
-            if preprocessing_switches["remove_punctuation"]:
-                tokens = self.remove_characters_after_tokenization(tokens)
-            if preprocessing_switches["convert_to_lowercase"]:
-                tokens = self.convert_to_lowercase(tokens)
-            if preprocessing_switches["remove_stopwords"]:
-                tokens = self.remove_stopwords(tokens)
-            if preprocessing_switches["apply_lemmatization"]:
-                tokens = self.apply_lemmatization(tokens)
-
+        elif model_type == "bm25":
             return tokens
 
-    def pre_process(self, docs, queries, model_type):
+        else:
+            raise Exception(f"Unknown Model type given: {model_type}")
 
-        preprocessing_switches = config_preprocessing.config_switches(model_type)
+    def load_data(self,):
+        docs = pickle.load(open(self.cache_doc_file, 'rb'))
+        queries = pickle.load(open(self.cache_query_file, 'rb'))
+        print(f"Preprocessed data loaded from : {self.cache_dir}")
+        return docs, queries
 
-        for key in docs:
-            for inner_key in docs[key]:
-                if (inner_key == "document"):
-                    docs[key][inner_key] = self.switches(docs[key][inner_key], preprocessing_switches, model_type)
+    def save_data(self, docs, queries):
+        if not self.cache_dir.exists(): self.cache_dir.mkdir(parents=True, exist_ok=True)
+        pickle.dump(docs, open(self.cache_doc_file, 'wb'))
+        pickle.dump(queries, open(self.cache_query_file, 'wb'))
+        print(f"Preprocessed data saved at : {self.cache_dir}")
 
-        for key in queries:
-            for inner_key in queries[key]:
-                if (inner_key == "query"):
-                    queries[key][inner_key] = self.switches(queries[key][inner_key], preprocessing_switches, model_type)
+    def pre_process(self, docs, queries, model_type, use_cache=False):
 
+        if not use_cache and self.cache_dir.exists():
+            delete_dir(dir_path=self.cache_dir)
 
-        # for i in range (len(queries)):
-        #     pre_preocessed_queries.append(switches(queries[i],preprocessing_switches))
-        #
-        # for i in range (len(docs)):
-        #     pre_processed_docs.append(switches(docs[i],preprocessing_switches))
+        if use_cache and self.cache_dir.exists():
+            return self.load_data()
+
+        params = config_preprocessing.config_switches(model_type)
+
+        for doc_id, data in tqdm(docs.items(), desc=f"Pre-Processing Docs"):
+            data["document"] = self.switches(text=data["document"], preprocessing_switches=params, model_type=model_type)
+
+        for query_id, data in tqdm(queries.items(), desc=f"Pre-Processing Queries"):
+            data["query"] = self.switches(text=data["query"], preprocessing_switches=params, model_type=model_type)
+
+        self.save_data(docs=docs, queries=queries)
 
         return docs, queries

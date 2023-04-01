@@ -145,14 +145,7 @@ class DataPreprocessing():
         if preprocessing_switches["apply_lemmatization"]:
             tokens = self.apply_lemmatization(tokens)
 
-        if model_type == "tfidf":
-            return " ".join(tokens)
-
-        elif model_type == "bm25":
-            return tokens
-
-        else:
-            raise Exception(f"Unknown Model type given: {model_type}")
+        return " ".join(tokens)
 
     def load_data(self,):
         docs = pickle.load(open(self.cache_doc_file, 'rb'))

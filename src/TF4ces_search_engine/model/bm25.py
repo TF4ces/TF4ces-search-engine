@@ -23,7 +23,7 @@ from src.TF4ces_search_engine.model.model_tf4ces import TF4cesBaseModel
 
 class BM25(TF4cesBaseModel):
 
-    def __init__(self, model_path, retrain=False):
+    def __init__(self, model_path=None, retrain=False):
         super().__init__(model_path=model_path)
 
         self.retrain = retrain
@@ -72,7 +72,7 @@ class BM25(TF4cesBaseModel):
 
 class FastBM25(BM25):
 
-    def __init__(self, model_path, retrain=False):
+    def __init__(self, model_path=None, retrain=False):
         super().__init__(model_path=model_path, retrain=retrain)
 
     @staticmethod
@@ -96,7 +96,7 @@ class FastBM25(BM25):
 
         # TODO train and save bm25 weights, and seperate out prediction
         # Step 1 : Train BM25
-        if self.retrain and train: self.train(docs=docs)
+        self.train(docs=docs)
 
         # Step 2 : Get relevant docs
         relevant_doc_ids = list()

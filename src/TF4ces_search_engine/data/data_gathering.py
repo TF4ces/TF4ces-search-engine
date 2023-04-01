@@ -84,7 +84,7 @@ class DataGathering():
         """
         
         if self.dataset_name == "lotte":
-            return self.lotte_documents(dataset_category="lifestyle", dataset_split="dev")
+            return self.lotte_documents(dataset_category=dataset_category, dataset_split=dataset_split)
         
         else: 
             raise Exception(f"unknown dataset_type given: {self.dataset_name}")
@@ -108,7 +108,7 @@ class DataGathering():
             }
         """
         if self.dataset_name == "lotte":
-            return self.lotte_queries(dataset_category="lifestyle", dataset_split="dev")
+            return self.lotte_queries(dataset_category=dataset_category, dataset_split=dataset_split)
         
         else: 
             raise Exception(f"unknown dataset_type given: {self.dataset_name}")

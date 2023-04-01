@@ -2,73 +2,72 @@
 # encoding: utf-8
 
 """
-    File Handlers.
+    TF-IDF Model
 
     Author : TF4ces
 """
+
+# Native imports
+import pickle
+
+# Third-party imports
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-class Tfidf():
-
-    document_keys = []
-    document_values = []
-
-    queries_keys = []
-    queries_values = []
-    source_values = []
-    rel_doc_ids_values = []
-
-    retrieved_id = []
-
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix_data = 0
-    query_vec = 0
-
-    def get_doc_items(self, docs):
-        for key, value in docs.items():
-            if isinstance(key, int):
-                self.document_keys.append(key)
-            if isinstance(value, dict):
-                self.get_doc_items(value)
-            else:
-                if key == 'document':
-                    self.document_values.append(value)
-
-        return self.document_keys, self.document_values
-
-    def get_query_items(self, queries):
-        for key in queries:
-            self.queries_keys.append(key)
-            for inner_key in queries[key]:
-                if inner_key == "query":
-                    self.queries_values.append(queries[key][inner_key])
-
-        return self.queries_keys, self.queries_values
-
-    def doc_vectorize(self, docs):
-        self.document_keys, self.document_values = self.get_doc_items(docs)
-        self.tfidf_matrix_data = self.vectorizer.fit_transform(self.document_values)
-        return self.tfidf_matrix_data,self.document_keys
-
-    def query_vectorize(self, query):
-        self.query_vec = self.vectorizer.transform([query])
-        return self.query_vec
-
-    def retrieve_documents(self, docs, queries, top_n):
-        self.tfidf_matrix_data, self.document_keys = self.doc_vectorize(docs)
-        self.queries_keys, self.queries_values = self.get_query_items(queries)
-
-        #Todo handle out of vocabulary issue.
-
-        for id in self.queries_keys:
-            query = self.queries_values[int(id)]
-            query_vec = self.vectorizer.transform([query]) #Todo call function
-            cosine_similarities = cosine_similarity(self.tfidf_matrix_data, query_vec).flatten()
-            sorted_doc_ids = [doc_id for _, doc_id in sorted(zip(cosine_similarities, self.document_keys), reverse=True)]
-
-            self.retrieved_id.append(sorted_doc_ids[:top_n])
-
-        return self.queries_keys, self.retrieved_id
+# User-module imports
+from src.TF4ces_search_engine.model.model_tf4ces import TF4cesBaseModel
 
 
+class TFIDF(TF4cesBaseModel):
+
+    def __init__(self, model_path, retrain=False):
+        super().__init__(model_path=model_path)
+
+        self.retrain = retrain
+        self.model_path = model_path
+
+        self.tfidf_vectorizer = self.load_model()
+
+    def load_model(self, ):
+
+        if not self.retrain:
+            tfidf = pickle.load(open(self.model_path, 'rb'))
+            print(f"Loaded TFIDF model with vocab_size : {len(tfidf.get_feature_names_out())} from : '{self.model_path}'")
+            return tfidf
+
+        return TfidfVectorizer()
+
+    def save_model(self, tfidf):
+        if not self.model_path.parent.exists(): self.model_path.parent.mkdir(parents=True, exist_ok=True)
+        pickle.dump(tfidf, open(self.model_path, 'wb'))
+        print(f"TFIDF Model saved at '{self.model_path}'")
+
+    def train(self, docs):
+        tfidf = self.tfidf_vectorizer.fit(raw_documents=docs)
+        print(f"TFIDF Model trained on {len(docs)} docs with vocab size : {len(self.tfidf_vectorizer.get_feature_names_out())}")
+        self.save_model(tfidf=tfidf)
+        return None
+
+    def encode(self, raw_documents):
+        return self.tfidf_vectorizer.transform(raw_documents=raw_documents)
+
+    def retrieve_documents(self, docs_obj, queries_obj, top_n, train=False):
+
+        # Step 0 : get ids and docs
+        doc_ids, docs, query_ids, queries = self.get_docs_n_queries(docs_obj=docs_obj, queries_obj=queries_obj)
+
+        # Step 1 : Train tf-idf
+        if self.retrain and train: self.train(docs=docs)
+
+        # Step 2 : Vectorize docs, and queries
+        doc_vecs, query_vecs = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
+
+        # Step 3 : Find similarity b/w, query and docs, and top n relevant docs.
+        top_N_indexes = cosine_similarity(query_vecs, doc_vecs).argsort(axis=1)[:, -top_n:]
+        relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
+
+        return (
+            (query_id, np.array(queries_obj[query_id]['rel_doc_ids']), rel_doc_ids)
+            for query_id, rel_doc_ids in zip(query_ids, relevant_doc_ids)
+        )

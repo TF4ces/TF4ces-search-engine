@@ -53,12 +53,12 @@ class TF4cesFlow:
 
         # data pre-processing
         self.use_cache = use_cache
-        self.preprocess_cache_dir = preprocess_cache_dir
+        self.preprocess_cache_dir = preprocess_cache_dir / self.dataset_name / self.dataset_category
 
         # model
         self.model = None
         self.model_name = model_name
-        self.model_path = model_path / self.model_name / f"{self.model_name}.{self.version}.pkl"
+        self.model_path = model_path / self.model_name / self.dataset_name / self.dataset_category / f"{self.model_name}.{self.version}.pkl"
 
     def gather_data(self, split='dev'):
         data_gathering = DataGathering(dataset_name=self.dataset_name, )

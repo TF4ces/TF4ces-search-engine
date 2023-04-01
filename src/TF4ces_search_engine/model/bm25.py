@@ -6,10 +6,10 @@
 
     Author : TF4ces
 """
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
-class Tfidf():
+from rank_bm25 import BM25Okapi
+
+class BM25():
 
     document_keys = []
     document_values = []
@@ -21,8 +21,7 @@ class Tfidf():
 
     retrieved_id = []
 
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix_data = 0
+    bm25 = 0
     query_vec = 0
 
     def get_doc_items(self, docs):
@@ -48,24 +47,17 @@ class Tfidf():
 
     def doc_vectorize(self, docs):
         self.document_keys, self.document_values = self.get_doc_items(docs)
-        self.tfidf_matrix_data = self.vectorizer.fit_transform(self.document_values)
-        return self.tfidf_matrix_data,self.document_keys
-
-    def query_vectorize(self, query):
-        self.query_vec = self.vectorizer.transform([query])
-        return self.query_vec
+        self.bm25 = BM25Okapi(self.document_values)  #Todo fit transform for predictions.
+        return self.bm25, self.document_keys
 
     def retrieve_documents(self, docs, queries, top_n):
-        self.tfidf_matrix_data, self.document_keys = self.doc_vectorize(docs)
+        self.bm25, self.document_keys = self.doc_vectorize(docs)
         self.queries_keys, self.queries_values = self.get_query_items(queries)
-
-        #Todo handle out of vocabulary issue.
 
         for id in self.queries_keys:
             query = self.queries_values[int(id)]
-            query_vec = self.vectorizer.transform([query]) #Todo call function
-            cosine_similarities = cosine_similarity(self.tfidf_matrix_data, query_vec).flatten()
-            sorted_doc_ids = [doc_id for _, doc_id in sorted(zip(cosine_similarities, self.document_keys), reverse=True)]
+            score = self.bm25.get_scores(query)
+            sorted_doc_ids = [doc_id for _, doc_id in sorted(zip(score, self.document_keys), reverse=True)]
 
             self.retrieved_id.append(sorted_doc_ids[:top_n])
 

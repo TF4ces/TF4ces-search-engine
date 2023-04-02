@@ -11,6 +11,7 @@
 from typing import Dict
 import json
 from pathlib import Path
+import shutil
 
 
 def read_file(file_path: Path) -> str:
@@ -91,3 +92,10 @@ def get_all_file_names(dir_path: Path):
         file_names.add(child)
 
     return file_names
+
+
+def delete_dir(dir_path: Path):
+    try:
+        shutil.rmtree(dir_path)
+    except OSError as e:
+        print("Error: %s - %s." % (e.filename, e.strerror))

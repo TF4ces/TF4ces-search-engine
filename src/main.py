@@ -15,10 +15,11 @@ import itertools
 import numpy as np
 
 # User imports
-from config.conf import __WORKSPACE__
+from config.conf import __WORKSPACE__, __SENTENCE_TRANSFORMERS_MODELS__
 from src.TF4ces_search_engine.data.data_gathering import DataGathering
 from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessing
 from src.TF4ces_search_engine.model.tf_idf import TFIDF
+from src.TF4ces_search_engine.model.sentence_transformer import Transformer
 from src.TF4ces_search_engine.model.bm25 import BM25, FastBM25
 from src.utils.evalutor import mean_recall_K, mean_precision_K
 
@@ -53,11 +54,12 @@ class TF4cesFlow:
 
         # data pre-processing
         self.use_cache = use_cache
-        self.preprocess_cache_dir = preprocess_cache_dir / self.dataset_name / self.dataset_category
+        self.preprocess_cache_dir = preprocess_cache_dir / model_name / self.dataset_name / self.dataset_category
 
         # model
         self.model = None
         self.model_name = model_name
+        self.emb_path = __WORKSPACE__ / "dataset" / "embeddings" / f"test_{self.version}" / model_name / self.dataset_name / self.dataset_category
         self.model_path = model_path / self.model_name / self.dataset_name / self.dataset_category / f"{self.model_name}.{self.version}.pkl"
 
     def gather_data(self, split='dev'):
@@ -87,6 +89,8 @@ class TF4cesFlow:
         elif self.model_name == 'bm25':
             self.model = FastBM25()
 
+        elif self.model_name in __SENTENCE_TRANSFORMERS_MODELS__:
+            self.model = Transformer(model_url=self.model_name, model_path=self.model_path, emb_path=self.emb_path)
         else:
             raise Exception(f"Unknown model name : {self.model_name}")
 

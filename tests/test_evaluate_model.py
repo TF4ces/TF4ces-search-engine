@@ -13,7 +13,7 @@
 # Third-party imports
 
 # User imports
-from config.conf import __WORKSPACE__
+from config.conf import __WORKSPACE__, __ALL_MODELS__
 from src.main import TF4cesFlow
 
 
@@ -30,14 +30,17 @@ if __name__ == '__main__':
     PREPROCESS_CACHE_DIR = __WORKSPACE__ / "dataset" / "preprocessed" / f"test_{VERSION}"  # pre processed data is stored here.
 
     # Model configs
-    MODEL = "bm25" # tfidf, bm25
+    MODEL = __ALL_MODELS__[1] # tfidf, bm25, all-mpnet-base-v2, all-roberta-large-v1, Intel/ColBERT-NQ
     MODEL_PATH = __WORKSPACE__ / "models"
 
+    print(f"Model Selected : {MODEL}")
 
     pipeline = TF4cesFlow(
         model_name=MODEL,
         dataset_name="lotte",
         dataset_category="lifestyle",
+        top_n=TOP_N,
+        k=K,
         use_cache=USE_CACHE,
         version=VERSION,
         preprocess_cache_dir=PREPROCESS_CACHE_DIR,
@@ -49,7 +52,6 @@ if __name__ == '__main__':
     if TEST_RUN: pipeline.small_test(split=split)  # DEBUG ONLY
     pipeline.data_preprocessing(split=split)
     pipeline.retrieval(split=split, bl_train=True)
-
 
     # Test
     split = 'test'

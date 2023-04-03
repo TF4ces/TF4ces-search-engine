@@ -15,6 +15,7 @@
 import multiprocessing
 
 # Third-party imports
+import torch
 import numpy as np
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
@@ -30,12 +31,18 @@ class Transformer(TF4cesBaseModel):
         super().__init__(model_path=model_path)
         self.model_url = model_url
         self.model_path = model_path
+        self.device = None
+
         self.model = self.load_model()
 
         self.emb_path = emb_path
 
     def load_model(self, ):
-        return SentenceTransformer(self.model_url)
+        model = SentenceTransformer(self.model_url)
+        self.device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
+        model.to(self.device)
+        print(f"Model loaded on '{self.device}'")
+        return model
 
     def encode(self, raw_documents):
         return self.model.encode(raw_documents)
@@ -67,7 +74,7 @@ class Transformer(TF4cesBaseModel):
         if cache and not emb_path.exists(): emb_path.mkdir(parents=True, exist_ok=True)
 
         bs = 10
-        pool_size = 4
+        pool_size = 1
 
         batched_data = list()
         for idx in range(0, len(doc_ids), bs):
@@ -78,14 +85,21 @@ class Transformer(TF4cesBaseModel):
 
             batched_data.append([batch_doc_ids, batch_docs, emb_path, cache])
 
-        worker_pool = multiprocessing.Pool(pool_size)
-        embeddings = np.array(worker_pool.starmap(
-            func=self.get_batched_embeddings,
-            iterable=tqdm(batched_data, total=len(batched_data), desc=f"Generating '{type}' embeddings [Batch Size: {bs}]"),
-            chunksize=1
-        ))
-        worker_pool.close()
-        worker_pool.join()
+        if pool_size > 1:
+            worker_pool = multiprocessing.Pool(pool_size)
+            embeddings = np.array(worker_pool.starmap(
+                func=self.get_batched_embeddings,
+                iterable=tqdm(batched_data, total=len(batched_data), desc=f"Generating '{type}' embeddings [Batch Size: {bs}]"),
+                chunksize=1
+            ))
+            worker_pool.close()
+            worker_pool.join()
+
+        else:
+            embeddings = list()
+            for data in tqdm(batched_data, desc=f"Generating '{type}' embeddings [Batch Size: {bs}]"):
+                embeddings.append(self.get_batched_embeddings(*data))
+            embeddings = np.array(embeddings)
 
         return embeddings.reshape(-1, embeddings.shape[-1])
 

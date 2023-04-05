@@ -94,14 +94,15 @@ class Transformer(TF4cesBaseModel):
             ))
             worker_pool.close()
             worker_pool.join()
+            embeddings = embeddings.reshape(-1, embeddings.shape[-1])
 
         else:
             embeddings = list()
             for data in tqdm(batched_data, desc=f"Generating '{type}' embeddings [Batch Size: {bs}]"):
-                embeddings.append(self.get_batched_embeddings(*data))
+                embeddings.extend(self.get_batched_embeddings(*data))
             embeddings = np.array(embeddings)
 
-        return embeddings.reshape(-1, embeddings.shape[-1])
+        return embeddings
 
 
     def retrieve_documents(self, docs_obj, queries_obj, top_n, train=True):

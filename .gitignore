@@ -131,3 +131,5 @@ dmypy.json
 
 # TF4ces
 models/
+.idea/
+dataset/

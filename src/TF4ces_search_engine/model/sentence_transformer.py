@@ -13,6 +13,7 @@
 
 # Native imports
 import multiprocessing
+import gc
 
 # Third-party imports
 import torch
@@ -32,6 +33,7 @@ class Transformer(TF4cesBaseModel):
         self.model_url = model_url
         self.model_path = model_path
         self.device = None
+        self.debug = True
 
         self.model = self.load_model()
 
@@ -71,6 +73,7 @@ class Transformer(TF4cesBaseModel):
 
     def get_embeddings(self, doc_ids, raw_documents, type='docs', cache=True):
         emb_path = self.emb_path / type
+        #print(emb_path)
         if cache and not emb_path.exists(): emb_path.mkdir(parents=True, exist_ok=True)
 
         bs = 10
@@ -95,6 +98,12 @@ class Transformer(TF4cesBaseModel):
             worker_pool.close()
             worker_pool.join()
             embeddings = embeddings.reshape(-1, embeddings.shape[-1])
+            
+        elif self.debug == False:
+            embeddings = list()
+            for data in batched_data:
+                embeddings.extend(self.get_batched_embeddings(*data))
+            embeddings = np.array(embeddings)
 
         else:
             embeddings = list()
@@ -114,9 +123,21 @@ class Transformer(TF4cesBaseModel):
         doc_embeddings = self.get_embeddings(doc_ids=doc_ids, raw_documents=docs, type="docs", cache=True)
         query_embeddings = self.get_embeddings(doc_ids=query_ids, raw_documents=queries, type="queries", cache=True)
         # doc_embeddings, query_embeddings = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
+        
+        #################################################################
+        batch_size = 1000  
+        num_queries, num_docs = len(query_ids), len(doc_ids)
+        top_N_indexes = np.zeros((num_queries, top_n), dtype=np.int32)
+
+        for i in range(0, num_queries, batch_size):
+            query_embeddings_batch = query_embeddings[i:i+batch_size]
+            sim_matrix_batch = cos_sim(query_embeddings_batch, doc_embeddings)
+            top_N_indexes_batch = sim_matrix_batch.argsort(axis=1)[:, -top_n:]
+            top_N_indexes[i:i+batch_size] = top_N_indexes_batch
+        ################################################################# 
 
         # Step 2 : Get relevant docs
-        top_N_indexes = cos_sim(query_embeddings, doc_embeddings).argsort(axis=1)[:, -top_n:]
+        #top_N_indexes = cos_sim(query_embeddings, doc_embeddings).argsort(axis=1)[:, -top_n:]
         relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
 
         return (

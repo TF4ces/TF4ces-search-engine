@@ -9,6 +9,8 @@
 
 
 # Native imports
+import sys
+sys.path.append('/home/jovyan/teaching_material/IR/TF4ces-search-engine/')
 
 # Third-party imports
 
@@ -19,8 +21,8 @@ from src.main import TF4cesFlow
 
 if __name__ == '__main__':
 
-    TOP_N = 5  # Retrieve top N documents for each query.
-    K = 5
+    TOP_N = 1000  # Retrieve top N documents for each query.
+    K = 1000
 
     VERSION = 'v0.0.1'  #v0.0.1-small
     TEST_RUN = False
@@ -30,7 +32,7 @@ if __name__ == '__main__':
     PREPROCESS_CACHE_DIR = __WORKSPACE__ / "dataset" / "preprocessed" / f"test_{VERSION}"  # pre processed data is stored here.
 
     # Model configs
-    MODEL = __ALL_MODELS__[1] # tfidf, bm25, all-mpnet-base-v2, all-roberta-large-v1, Intel/ColBERT-NQ
+    MODEL = __ALL_MODELS__[2] # tfidf, bm25, all-mpnet-base-v2, all-roberta-large-v1, Intel/ColBERT-NQ
     MODEL_PATH = __WORKSPACE__ / "models"
 
     print(f"Model Selected : {MODEL}")
@@ -51,7 +53,7 @@ if __name__ == '__main__':
     pipeline.gather_data(split=split)
     if TEST_RUN: pipeline.small_test(split=split)  # DEBUG ONLY
     pipeline.data_preprocessing(split=split)
-    pipeline.retrieval(split=split, bl_train=True)
+    pipeline.retrieval(split=split, bl_train=False)
 
     # Test
     split = 'test'

@@ -58,7 +58,7 @@ if __name__ == '__main__':
         model_path=MODEL_PATH,
     )
 
-    split = 'dev'
+    split = 'test'
     pipeline.base_gather_data(split=split)
     if TEST_RUN: pipeline.small_test(split=split, nqueries=SAMPLE_QUERIES)  # DEBUG ONLY
     pipeline.data_preprocessing(split=split, use_cache=True, cache_sub_dir=None)
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     
     ###################################################### EVALUATION ##################################################################
-    K = 10
+    K = 1000
         
     # print(f"{pred_doc_ids_d1=}")
     # print(f"{pred_doc_ids_d2=}")

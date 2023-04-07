@@ -61,25 +61,23 @@ class TFIDF(TF4cesBaseModel):
         if self.retrain and train: self.train(docs=docs)
 
         # Step 2 : Vectorize docs, and queries
-        #doc_vecs, query_vecs = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
-        
         doc_embeddings, query_embeddings = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
-        print("Encoded")
+        print(f"Vector embeddings generated for queries({len(queries)}) and docs ({len(docs)})")
 
         # Step 3 : Find similarity b/w, query and docs, and top n relevant docs.
         #################################################################
-        batch_size = 1000  
-        num_queries, num_docs = len(query_ids), len(doc_ids)
-        top_N_indexes = np.zeros((num_queries, top_n), dtype=np.int32)
+        batch_size = 1000
+        top_N_indexes = list()
 
-        for i in range(0, num_queries, batch_size):
-            query_embeddings_batch = query_embeddings[i:i+batch_size]
-            sim_matrix_batch = cosine_similarity(query_embeddings_batch, doc_embeddings)
-            top_N_indexes_batch = sim_matrix_batch.argsort(axis=1)[:, -top_n:]
-            top_N_indexes[i:i+batch_size] = top_N_indexes_batch
-        ################################################################# 
-        
-        #top_N_indexes = cosine_similarity(query_vecs, doc_vecs).argsort(axis=1)[:, -top_n:]
+        for i in range(0, len(query_ids), batch_size):
+            top_N_indexes.extend(
+                cosine_similarity(
+                    query_embeddings[i:i+batch_size], doc_embeddings
+                ).argsort(axis=1)[:, ::-1][:, :top_n]  # Argsort docs, and filter top_n, reverse for descending
+            )
+        #################################################################
+
+        # top_N_indexes = cosine_similarity(query_embeddings, doc_embeddings).argsort(axis=1)[:, -top_n:][:, ::-1]
         relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
 
         return (

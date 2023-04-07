@@ -169,6 +169,7 @@ class DataPreprocessing():
 
         params = config_preprocessing.config_switches(model_type)
 
+        print(f"Cache dir for Pre-processing : {self.cache_dir}")
         for doc_id, data in tqdm(docs.items(), desc=f"Pre-Processing Docs"):
             data["document"] = self.switches(text=data["document"], preprocessing_switches=params, model_type=model_type)
 
@@ -178,19 +179,19 @@ class DataPreprocessing():
         self.save_data(docs=docs, queries=queries)
 
         return docs, queries
-    
-    def pre_process_query(self, queries, model_type, use_cache=False):
-        if not use_cache and self.cache_dir.exists():
-            delete_dir(dir_path=self.cache_dir)
 
-        if use_cache and self.cache_dir.exists():
-            return self.load_data()
+    def pre_process_raw(self, raw_texts, model_type):
+        params = config_preprocessing.config_switches(model_type)
+        return [
+            self.switches(text=text, preprocessing_switches=params, model_type=model_type)
+            for text in raw_texts
+        ]
+
+    def pre_process_query(self, queries, model_type):
 
         params = config_preprocessing.config_switches(model_type)
 
         for query_id, data in tqdm(queries.items(), desc=f"Pre-Processing Queries"):
             data["query"] = self.switches(text=data["query"], preprocessing_switches=params, model_type=model_type)
-
-        #self.save_data(docs=docs, queries=queries)
 
         return queries

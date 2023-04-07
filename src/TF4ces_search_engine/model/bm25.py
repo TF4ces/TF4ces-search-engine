@@ -61,7 +61,7 @@ class BM25(TF4cesBaseModel):
         for query_id, query in tqdm(zip(query_ids, queries), total=len(query_ids), desc=f"Prediction"):
             score_matrix.append(self.get_scores(query))
 
-        top_N_indexes = np.array(score_matrix).argsort(axis=1)[:, -top_n:]
+        top_N_indexes = np.array(score_matrix).argsort(axis=1)[:, -top_n:][::-1]
         relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
 
         return (

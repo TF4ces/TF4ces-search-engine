@@ -17,6 +17,7 @@ import numpy as np
 
 # User imports
 from config.conf import __WORKSPACE__, __SENTENCE_TRANSFORMERS_MODELS__
+from src.TF4ces_search_engine.data.data_gathering import DataGathering
 from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessing
 from src.TF4ces_search_engine.model.sentence_transformer import Transformer
 from src.TF4ces_search_engine.model.tf_idf import TFIDF
@@ -65,8 +66,13 @@ class Ensemble:
 
     def base_gather_data(self, split='dev'):
         # data_gathering = DataGathering(dataset_name=self.dataset_name, )
-        self.data[split]['docs'] = pickle.load(open(self.dict_path / str("docs." + split + ".pkl"), 'rb'))
-        self.data[split]['queries'] = pickle.load(open(self.dict_path / str("queries." + split + ".pkl"), 'rb'))
+        data_gathering = DataGathering(dataset_name=self.dataset_name, )
+        self.data[split]['docs'] = data_gathering.get_documents(dataset_category=self.dataset_category,
+                                                                dataset_split=split)
+        self.data[split]['queries'] = data_gathering.get_queries(dataset_category=self.dataset_category,
+                                                                 dataset_split=split)
+        # self.data[split]['docs'] = pickle.load(open(self.dict_path / str("docs." + split + ".pkl"), 'rb'))
+        # self.data[split]['queries'] = pickle.load(open(self.dict_path / str("queries." + split + ".pkl"), 'rb'))
         
     def get_specific_ids(self,ids,key,split):
         values_subset = {i:v for i, v in self.data[split][key].items() if i in ids}

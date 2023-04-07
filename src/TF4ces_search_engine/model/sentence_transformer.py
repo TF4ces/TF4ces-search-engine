@@ -43,7 +43,7 @@ class Transformer(TF4cesBaseModel):
         model = SentenceTransformer(self.model_url)
         self.device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
         model.to(self.device)
-        print(f"Model loaded on '{self.device}'")
+        print(f"Model ({self.model_url}) loaded on '{self.device}'")
         return model
 
     def encode(self, raw_documents):
@@ -88,7 +88,7 @@ class Transformer(TF4cesBaseModel):
 
             batched_data.append([batch_doc_ids, batch_docs, emb_path, cache])
 
-        if pool_size > 1:
+        if pool_size > 1 and self.device == "cpu":
             worker_pool = multiprocessing.Pool(pool_size)
             embeddings = np.array(worker_pool.starmap(
                 func=self.get_batched_embeddings,
@@ -107,12 +107,35 @@ class Transformer(TF4cesBaseModel):
 
         else:
             embeddings = list()
-            for data in tqdm(batched_data, desc=f"Generating '{type}' embeddings [Batch Size: {bs}]"):
+            for data in tqdm(batched_data, desc=f"Generating/Loading '{type}' embeddings [Batch Size: {bs}]"):
                 embeddings.extend(self.get_batched_embeddings(*data))
             embeddings = np.array(embeddings)
 
         return embeddings
 
+    def get_relevant_docs_using_embds(self, query_ids, queries, doc_ids, doc_embeddings, top_n):
+
+        # Step 0 : get ids and docs
+
+        # Step 1 Generate embeddings
+        # doc_embeddings = self.get_embeddings(doc_ids=doc_ids, raw_documents=docs, type="docs", cache=True)
+        query_embeddings = self.get_embeddings(doc_ids=query_ids, raw_documents=queries, type="queries", cache=True)
+
+        #################################################################
+        batch_size = 1000
+        top_N_indexes = list()
+
+        for i in range(0, len(query_ids), batch_size):
+            top_N_indexes.extend(cos_sim(query_embeddings[i:i+batch_size], doc_embeddings).argsort(axis=1, descending=True)[:, :top_n])
+        #################################################################
+
+        # Step 2 : Get relevant docs
+        relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
+
+        return (
+            (query_id, rel_doc_ids)
+            for query_id, rel_doc_ids in zip(query_ids, relevant_doc_ids)
+        )
 
     def retrieve_documents(self, docs_obj, queries_obj, top_n, train=True):
 
@@ -122,22 +145,16 @@ class Transformer(TF4cesBaseModel):
         # Step 1 Generate embeddings
         doc_embeddings = self.get_embeddings(doc_ids=doc_ids, raw_documents=docs, type="docs", cache=True)
         query_embeddings = self.get_embeddings(doc_ids=query_ids, raw_documents=queries, type="queries", cache=True)
-        # doc_embeddings, query_embeddings = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
-        
+
         #################################################################
         batch_size = 1000  
-        num_queries, num_docs = len(query_ids), len(doc_ids)
-        top_N_indexes = np.zeros((num_queries, top_n), dtype=np.int32)
+        top_N_indexes = list()
 
-        for i in range(0, num_queries, batch_size):
-            query_embeddings_batch = query_embeddings[i:i+batch_size]
-            sim_matrix_batch = cos_sim(query_embeddings_batch, doc_embeddings)
-            top_N_indexes_batch = sim_matrix_batch.argsort(axis=1)[:, -top_n:]
-            top_N_indexes[i:i+batch_size] = top_N_indexes_batch
-        ################################################################# 
+        for i in range(0, len(query_ids), batch_size):
+            top_N_indexes.extend(cos_sim(query_embeddings[i:i+batch_size], doc_embeddings).argsort(axis=1, descending=True)[:, :top_n])
+        #################################################################
 
         # Step 2 : Get relevant docs
-        #top_N_indexes = cos_sim(query_embeddings, doc_embeddings).argsort(axis=1)[:, -top_n:]
         relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
 
         return (

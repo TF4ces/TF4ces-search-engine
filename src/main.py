@@ -67,8 +67,14 @@ class TF4cesFlow:
 
     def gather_data(self, split='dev'):
         #data_gathering = DataGathering(dataset_name=self.dataset_name, )
-        self.data[split]['docs'] = pickle.load(open(self.dict_path / str("docs." + split + ".pkl"), 'rb'))
-        self.data[split]['queries'] = pickle.load(open(self.dict_path / str("queries." + split + ".pkl"), 'rb'))
+        data_gathering = DataGathering(dataset_name=self.dataset_name, )
+        self.data[split]['docs'] = data_gathering.get_documents(dataset_category=self.dataset_category,
+                                                                dataset_split=split)
+        self.data[split]['queries'] = data_gathering.get_queries(dataset_category=self.dataset_category,
+                                                                 dataset_split=split)
+
+        # self.data[split]['docs'] = pickle.load(open(self.dict_path / str("docs." + split + ".pkl"), 'rb'))
+        # self.data[split]['queries'] = pickle.load(open(self.dict_path / str("queries." + split + ".pkl"), 'rb'))
 
     def small_test(self, split='dev'):
         self.data[split]['docs'] = dict(itertools.islice(self.data[split]['docs'].items(), 1_000, 3_000))

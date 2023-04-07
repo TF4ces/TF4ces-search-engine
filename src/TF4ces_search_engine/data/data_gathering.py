@@ -15,7 +15,6 @@
 import ir_datasets
 from pathlib import Path
 from config.conf import __WORKSPACE__
-import pandas as pd
 
 
 class DataGathering():

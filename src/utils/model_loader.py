@@ -38,7 +38,6 @@ def load_model(model_name, model_path, emb_path, bl_train):
         return FastBM25()
 
     elif model_name in __SENTENCE_TRANSFORMERS_MODELS__:
-        # emb_path = emb_path if split == "dev" else emb_test_path
         return Transformer(model_url=model_name, model_path=None, emb_path=emb_path)
 
     else:

@@ -16,7 +16,6 @@ from fastbm25 import fastbm25
 from tqdm.auto import tqdm
 import numpy as np
 
-
 # User imports
 from src.TF4ces_search_engine.model.model_tf4ces import TF4cesBaseModel
 
@@ -40,7 +39,7 @@ class BM25(TF4cesBaseModel):
 
     def train(self, docs):
         self.bm25 = self.init_model(docs=docs)
-        print(f"BM25 Model trained on {len(docs)} docs.")
+        print(f"Model [BM25] : Trained on {len(docs)} docs.")
         return None
 
     @staticmethod
@@ -58,6 +57,7 @@ class BM25(TF4cesBaseModel):
 
         # Step 2 : Get relevant docs
         score_matrix = list()
+        print(f"Model [BM25] : Finding most relevant Docs for given Queries...")
         for query_id, query in tqdm(zip(query_ids, queries), total=len(query_ids), desc=f"Prediction"):
             score_matrix.append(self.get_scores(query))
 
@@ -100,6 +100,7 @@ class FastBM25(BM25):
 
         # Step 2 : Get relevant docs
         relevant_doc_ids = list()
+        print(f"Model [BM25-Fast] : Finding most relevant Docs for given Queries...")
         for query_id, query in tqdm(zip(query_ids, queries), total=len(query_ids), desc=f"Prediction"):
             rel_doc_ids_ = self.get_scores(query=query, top_n=top_n)
             relevant_doc_ids.append(np.array(rel_doc_ids_))

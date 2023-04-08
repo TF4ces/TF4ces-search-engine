@@ -60,9 +60,8 @@ class TF4cesBaseModel:
         # Step 0 : get ids and docs
         doc_ids, docs, query_ids, queries = self.get_docs_n_queries(docs_obj=docs_obj, queries_obj=queries_obj)
 
-        # TODO train and save bm25 weights, and seperate out prediction
         # Step 1 : Train Model
-        if train: self.train()
+        if train: self.train(docs=docs)
 
         # Step 2 : Get relevant docs
         relevant_doc_ids = None # TODO predicted doc_ids

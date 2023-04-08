@@ -43,7 +43,7 @@ class Transformer(TF4cesBaseModel):
         model = SentenceTransformer(self.model_url)
         self.device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
         model.to(self.device)
-        print(f"Model ({self.model_url}) loaded on '{self.device}'")
+        print(f"Model [{self.model_url}] : Loaded on '{self.device}'")
         return model
 
     def encode(self, raw_documents):
@@ -115,16 +115,14 @@ class Transformer(TF4cesBaseModel):
 
     def get_relevant_docs_using_embds(self, query_ids, queries, doc_ids, doc_embeddings, top_n):
 
-        # Step 0 : get ids and docs
-
-        # Step 1 Generate embeddings
-        # doc_embeddings = self.get_embeddings(doc_ids=doc_ids, raw_documents=docs, type="docs", cache=True)
+        # Step 1 Generate embeddings for queries
         query_embeddings = self.get_embeddings(doc_ids=query_ids, raw_documents=queries, type="queries", cache=True)
 
         #################################################################
         batch_size = 1000
         top_N_indexes = list()
 
+        # print(f"Model [{self.model_url}] : Finding cosine similarities between Queries & Docs...")
         for i in range(0, len(query_ids), batch_size):
             top_N_indexes.extend(cos_sim(query_embeddings[i:i+batch_size], doc_embeddings).argsort(axis=1, descending=True)[:, :top_n])
         #################################################################
@@ -150,6 +148,7 @@ class Transformer(TF4cesBaseModel):
         batch_size = 1000  
         top_N_indexes = list()
 
+        print(f"Model [{self.model_url}] : Finding cosine similarities between Queries & Docs...")
         for i in range(0, len(query_ids), batch_size):
             top_N_indexes.extend(cos_sim(query_embeddings[i:i+batch_size], doc_embeddings).argsort(axis=1, descending=True)[:, :top_n])
         #################################################################

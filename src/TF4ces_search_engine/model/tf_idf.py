@@ -11,6 +11,7 @@
 import pickle
 
 # Third-party imports
+from sklearn.exceptions import NotFittedError
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -33,7 +34,7 @@ class TFIDF(TF4cesBaseModel):
 
         if not self.retrain:
             tfidf = pickle.load(open(self.model_path, 'rb'))
-            print(f"Loaded TFIDF model with vocab_size : {len(tfidf.get_feature_names_out())} from : '{self.model_path}'")
+            print(f"Model [TF-IDF] : Loaded with vocab_size ({len(tfidf.get_feature_names_out())}) from : '{self.model_path}'")
             return tfidf
 
         return TfidfVectorizer()
@@ -41,16 +42,21 @@ class TFIDF(TF4cesBaseModel):
     def save_model(self, tfidf):
         if not self.model_path.parent.exists(): self.model_path.parent.mkdir(parents=True, exist_ok=True)
         pickle.dump(tfidf, open(self.model_path, 'wb'))
-        print(f"TFIDF Model saved at '{self.model_path}'")
+        print(f"Model [TF-IDF] : Saved at '{self.model_path}'")
 
     def train(self, docs):
         tfidf = self.tfidf_vectorizer.fit(raw_documents=docs)
-        print(f"TFIDF Model trained on {len(docs)} docs with vocab size : {len(self.tfidf_vectorizer.get_feature_names_out())}")
+        print(f"Model [TF-IDF] : Trained on {len(docs)} docs with vocab size : {len(self.tfidf_vectorizer.get_feature_names_out())}")
         self.save_model(tfidf=tfidf)
         return None
 
     def encode(self, raw_documents):
-        return self.tfidf_vectorizer.transform(raw_documents=raw_documents)
+        try:
+            return self.tfidf_vectorizer.transform(raw_documents=raw_documents)
+
+        except NotFittedError:
+            self.train(docs=raw_documents)
+            return self.encode(raw_documents=raw_documents)
 
     def retrieve_documents(self, docs_obj, queries_obj, top_n, train=False):
 
@@ -62,12 +68,13 @@ class TFIDF(TF4cesBaseModel):
 
         # Step 2 : Vectorize docs, and queries
         doc_embeddings, query_embeddings = self.encode(raw_documents=docs), self.encode(raw_documents=queries)
-        print(f"Vector embeddings generated for queries({len(queries)}) and docs ({len(docs)})")
+        print(f"Model [TF-IDF] : Vector embeddings generated for queries({len(queries)}) and docs ({len(docs)})")
 
         # Step 3 : Find similarity b/w, query and docs, and top n relevant docs.
         #################################################################
         batch_size = 1000
         top_N_indexes = list()
+        print(f"Model [TF-IDF] : Finding cosine similarities between Queries & Docs...")
 
         for i in range(0, len(query_ids), batch_size):
             top_N_indexes.extend(
@@ -75,10 +82,9 @@ class TFIDF(TF4cesBaseModel):
                     query_embeddings[i:i+batch_size], doc_embeddings
                 ).argsort(axis=1)[:, ::-1][:, :top_n]  # Argsort docs, and filter top_n, reverse for descending
             )
-        #################################################################
 
-        # top_N_indexes = cosine_similarity(query_embeddings, doc_embeddings).argsort(axis=1)[:, -top_n:][:, ::-1]
         relevant_doc_ids = map(lambda indexes: np.array(doc_ids)[indexes], top_N_indexes)
+        #################################################################
 
         return (
             (query_id, np.array(queries_obj[query_id]['rel_doc_ids']), rel_doc_ids)

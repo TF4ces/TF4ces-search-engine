@@ -10,10 +10,8 @@
 
 # Native imports
 import itertools
-import pickle
 
 # Third-party imports
-import numpy as np
 
 # User imports
 from config.conf import __WORKSPACE__, __SENTENCE_TRANSFORMERS_MODELS__
@@ -22,7 +20,7 @@ from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessin
 from src.TF4ces_search_engine.model.tf_idf import TFIDF
 from src.TF4ces_search_engine.model.sentence_transformer import Transformer
 from src.TF4ces_search_engine.model.bm25 import BM25, FastBM25
-from src.utils.evalutor import mean_recall_K, mean_precision_K
+from src.utils.evalutor import calc_mean_recall_n_precision
 
 
 class TF4cesFlow:
@@ -66,15 +64,9 @@ class TF4cesFlow:
         self.dict_path = __WORKSPACE__ / "dataset" / "dictionary" / self.dataset_category 
 
     def gather_data(self, split='dev'):
-        #data_gathering = DataGathering(dataset_name=self.dataset_name, )
         data_gathering = DataGathering(dataset_name=self.dataset_name, )
-        self.data[split]['docs'] = data_gathering.get_documents(dataset_category=self.dataset_category,
-                                                                dataset_split=split)
-        self.data[split]['queries'] = data_gathering.get_queries(dataset_category=self.dataset_category,
-                                                                 dataset_split=split)
-
-        # self.data[split]['docs'] = pickle.load(open(self.dict_path / str("docs." + split + ".pkl"), 'rb'))
-        # self.data[split]['queries'] = pickle.load(open(self.dict_path / str("queries." + split + ".pkl"), 'rb'))
+        self.data[split]['docs'] = data_gathering.get_documents(dataset_category=self.dataset_category, dataset_split=split)
+        self.data[split]['queries'] = data_gathering.get_queries(dataset_category=self.dataset_category, dataset_split=split)
 
     def small_test(self, split='dev'):
         self.data[split]['docs'] = dict(itertools.islice(self.data[split]['docs'].items(), 1_000, 3_000))
@@ -115,14 +107,8 @@ class TF4cesFlow:
             train=bl_train,
         )
         q_ids, gold_doc_ids, pred_doc_ids = zip(*pred_queries)
-        
-        #new_pred_doc_ids = [[i+1 for i in inner] for inner in pred_doc_ids]
-
-        print(f"Evaluation..")
-        recall_k = mean_recall_K(golds=gold_doc_ids, preds=pred_doc_ids, k=self.k)
-        precision_k = mean_precision_K(golds=gold_doc_ids, preds=pred_doc_ids, k=self.k)
-
-        print(f"Recall@{self.k} : {recall_k}")
-        print(f"Precision@{self.k} : {precision_k}")
-        print(f"Sample Doc Ids\nGold: {gold_doc_ids[:5]}\nPred: {pred_doc_ids[:5]}")
         return q_ids, gold_doc_ids, pred_doc_ids
+
+    def evaluate(self, gold_doc_ids, pred_doc_ids, k=None):
+        k = k if k is not None else self.k
+        return calc_mean_recall_n_precision(gold_doc_ids=gold_doc_ids, pred_doc_ids=pred_doc_ids, k=k, bl_print=True)

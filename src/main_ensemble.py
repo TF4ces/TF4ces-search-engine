@@ -17,7 +17,7 @@ from tqdm.auto import tqdm
 from config.conf import __WORKSPACE__
 from src.utils.model_loader import load_model
 from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessing
-from src.utils.evalutor import calc_mean_recall_n_precision
+from src.utils.evalutor import calc_mean_recall_n_precision, plot_precision_and_recall_curve
 
 
 class TF4cesSearchEnsemble:
@@ -40,11 +40,11 @@ class TF4cesSearchEnsemble:
 
     def summary(self):
         print('-'*70)
-        print(f"\t\t\t\t\t\tTF4ces Search Engine")
+        print(f"\t\tTF4ces Search Engine")
         print('-' * 70)
         print(f"Filter Model\t: {list(self.filter_model_dict.keys())}")
         print(f"Voter Models\t: {list(self.voter_models_dict.keys())}")
-        print(f"Num of Docs\t\t: {len(self.docs_obj)}")
+        print(f"Num of Docs\t: {len(self.docs_obj)}")
         print(f"Filter Top N\t: {self.filter_top_n}")
         print(f"Voting Top N\t: {self.voting_top_n}")
         print('-' * 70, end='\n\n')
@@ -67,7 +67,7 @@ class TF4cesSearchEnsemble:
                 bl_train=False
             )
 
-    def filter_docs(self, queries_obj):
+    def filter_docs(self, queries_obj, bl_eval=True):
         # Step 1 : Get only the first filter model.
         model_name =  list(self.filter_models.keys())[0]
         model = list(self.filter_models.values())[0]
@@ -95,7 +95,7 @@ class TF4cesSearchEnsemble:
 
         # Step 5 : Evaluation
         k = self.filter_top_n
-        calc_mean_recall_n_precision(gold_doc_ids=gold_doc_ids, pred_doc_ids=pred_doc_ids, k=k, to_display=f'Filter Model', bl_print=True)
+        if bl_eval: calc_mean_recall_n_precision(gold_doc_ids=gold_doc_ids, pred_doc_ids=pred_doc_ids, k=k, to_display=f'Filter Model', bl_print=True)
 
         self.q_ids = q_ids
         self.rel_doc_ids[model_name] = pred_doc_ids
@@ -124,6 +124,24 @@ class TF4cesSearchEnsemble:
             # Step 3 : Read embeddings from disk and save in memory
             for id, emb in zip(all_doc_ids, self.read_embeddings(doc_ids=all_doc_ids, emb_path=emb_path, model_name=model_name)):
                 self.embeddings[model_name][id] = emb
+
+    def load_embeddings_if_not_present(self, filtered_rel_doc_ids):
+
+        # Step 1 : Get all doc ids relevant for all the queries to be loaded in memory.
+        all_doc_ids = set([doc_id for doc_ids in filtered_rel_doc_ids for doc_id in doc_ids])
+
+        ids_not_present = list()
+        # Step 2 : Load all_doc_ids embeddings, for each voter model.
+        for model_name, model in self.voter_models.items():
+            emb_path = model.emb_path / 'docs'
+
+            # Step 3 : Read embeddings from disk and save in memory
+            for id in all_doc_ids:
+                emb = self.embeddings[model_name].get(id, None)
+                if emb is None:
+                    ids_not_present.append([id])
+
+        if len(ids_not_present) > 0: self.load_embeddings(filtered_rel_doc_ids=ids_not_present)
 
     def find_most_relevant_docs(self, q_ids, filtered_rel_doc_ids, queries_obj):
 
@@ -174,3 +192,8 @@ class TF4cesSearchEnsemble:
             to_display=f"{to_display}",
             bl_print=True
         )
+
+    @staticmethod
+    def plot_eval_curve(q_ids, queries_obj, preds_doc_ids, max_k):
+        gold_doc_ids = [queries_obj[q_id]['rel_doc_ids'] for q_id in q_ids]
+        plot_precision_and_recall_curve(gold_doc_ids, preds_doc_ids, max_k=max_k)

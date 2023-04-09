@@ -10,20 +10,20 @@
         For windows the doc.iter might throw decoding error while reading tsv file,
         and might need to change the encoding in source files as per this issue
         https://github.com/allenai/ir_datasets/issues/208#issuecomment-1235944338
+
+    Warnings :
+        Use ir-datasets==0.4.1 version
 """
 
 import ir_datasets
 from pathlib import Path
-from config.conf import __WORKSPACE__
 
 
 class DataGathering():
 
-    def __init__(self, dataset_name="lotte", base_dataset_dir=__WORKSPACE__ / "dataset"):
-        '''base_dataset_dir : forum or search'''
+    def __init__(self, dataset_name="lotte"):
         self.dataset_name = dataset_name
-        # self.base_dataset_dir = base_dataset_dir #TODO remove
-    
+
     def lotte_documents(self, dataset_category="lifestyle", dataset_split="dev"):
 
         # Step 1 : Load dataset
@@ -99,12 +99,12 @@ class DataGathering():
             
             
         Return:
-            Dict, TODO
+            Dict, of queries
             
         Example : 
             {
-                1: {"query": "query 1..", "doc_ids": [1, 2, 3]},
-                2: {"query": "query 2..", "doc_ids": [1, 5, 3]},
+                1: {"query": "query 1..", "rel_doc_ids": [1, 2, 3]},
+                2: {"query": "query 2..", "rel_doc_ids": [1, 5, 3]},
             }
         """
         if self.dataset_name == "lotte":

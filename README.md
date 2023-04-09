@@ -16,17 +16,18 @@ An experiment driven Search Engine Project, developed to index and retrive best 
  
 ## Project Plan
 
- - [ ] Phase 1
-      - [ ] Data Analysis & Pipeline
-      - [ ] Model Pipeline
-      - [ ] Evaluation Pipeline
- - [ ] Phase 2
-      - [ ] BM25 Model + BERT Model
-      - [ ] Hyperparameter tuning
-      - [ ] Ensemble Pipeline
- - [ ] Phase 3
-      - [ ] ColBERT Model
-      - [ ] Experimentation
+ - [X] Phase 1
+      - [X] Data Analysis & Pipeline
+      - [X] Model Pipeline
+      - [X] Evaluation Pipeline
+ - [X] Phase 2
+      - [X] BM25 Model + MPNet Model
+      - [X] Hyperparameter tuning
+      - [X] Ensemble Pipeline
+ - [X] Phase 3
+      - [X] RoBERTa Model
+      - [X] Ensemble enhancement
+      - [X] Experimentation
   
   
 ## Future works
@@ -47,10 +48,17 @@ TODO
     $ pip -r requirements.txt
     ```
     
+3. Download pre-loaded embeddings to this path: `./dataset/embeddings_test` from [GDrive](https://drive.google.com/file/d/1x-lOZMwBK5Ea9eCDE18gQCTnukZ16xQT/view?usp=share_link)
+   
+   **Note**: To generate embeddings from scratch run[./tests/test_evaluate_model.py](tests/test_evaluate_model.py) script setting MODEL to `all-mpnet-base-v2`, `all-roberta-large-v1` individually twice. 
+   
+   **WARNING**: use a GPU machine and it is expected to take 1hr to generate.
+
+
 3. Run TF4ces Search Engine
-     ```console
-       TODO
-     ```
+      
+   1. Run Eval Pipeline from [this](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
+   2. Run prediction Demo Pipeline from [this](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.
 
 
 

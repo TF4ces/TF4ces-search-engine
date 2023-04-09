@@ -12,7 +12,6 @@
 import itertools
 
 # Third-party imports
-import numpy as np
 
 # User imports
 from config.conf import __WORKSPACE__, __SENTENCE_TRANSFORMERS_MODELS__
@@ -21,7 +20,7 @@ from src.TF4ces_search_engine.feature.data_preprocessing import DataPreprocessin
 from src.TF4ces_search_engine.model.tf_idf import TFIDF
 from src.TF4ces_search_engine.model.sentence_transformer import Transformer
 from src.TF4ces_search_engine.model.bm25 import BM25, FastBM25
-from src.utils.evalutor import mean_recall_K, mean_precision_K
+from src.utils.evalutor import calc_mean_recall_n_precision
 
 
 class TF4cesFlow:
@@ -60,7 +59,9 @@ class TF4cesFlow:
         self.model = None
         self.model_name = model_name
         self.emb_path = __WORKSPACE__ / "dataset" / "embeddings" / f"test_{self.version}" / model_name / self.dataset_name / self.dataset_category
+        self.emb_test_path = __WORKSPACE__ / "dataset" / "embeddings_test" / f"test_{self.version}" / model_name / self.dataset_name / self.dataset_category
         self.model_path = model_path / self.model_name / self.dataset_name / self.dataset_category / f"{self.model_name}.{self.version}.pkl"
+        self.dict_path = __WORKSPACE__ / "dataset" / "dictionary" / self.dataset_category 
 
     def gather_data(self, split='dev'):
         data_gathering = DataGathering(dataset_name=self.dataset_name, )
@@ -82,7 +83,7 @@ class TF4cesFlow:
             use_cache=self.use_cache
         )
 
-    def get_model(self, bl_train):
+    def get_model(self, bl_train, split="dev"):
         if self.model_name == 'tfidf':
             self.model = TFIDF(model_path=self.model_path, retrain=bl_train)
 
@@ -90,13 +91,15 @@ class TF4cesFlow:
             self.model = FastBM25()
 
         elif self.model_name in __SENTENCE_TRANSFORMERS_MODELS__:
-            self.model = Transformer(model_url=self.model_name, model_path=self.model_path, emb_path=self.emb_path)
+            emb_path = self.emb_path if split == "dev" else self.emb_test_path
+            self.model = Transformer(model_url=self.model_name, model_path=self.model_path, emb_path=emb_path)
+
         else:
             raise Exception(f"Unknown model name : {self.model_name}")
 
     def retrieval(self, split="dev", bl_train=False):
         print(f"Retrieving top {self.top_n} for queries({len(self.data[split]['queries'])}) documents({len(self.data[split]['docs'])})...")
-        self.get_model(bl_train=bl_train)
+        self.get_model(bl_train=bl_train, split=split)
         pred_queries = self.model.retrieve_documents(
             docs_obj=self.data[split]['docs'],
             queries_obj=self.data[split]['queries'],
@@ -104,12 +107,8 @@ class TF4cesFlow:
             train=bl_train,
         )
         q_ids, gold_doc_ids, pred_doc_ids = zip(*pred_queries)
-
-        print(f"Evaluation..")
-        recall_k = mean_recall_K(golds=gold_doc_ids, preds=pred_doc_ids, k=self.k)
-        precision_k = mean_precision_K(golds=gold_doc_ids, preds=pred_doc_ids, k=self.k)
-
-        print(f"Recall@{self.k} : {recall_k}")
-        print(f"Precision@{self.k} : {precision_k}")
-        print(f"Sample Doc Ids\nGold: {gold_doc_ids[:5]}\nPred: {pred_doc_ids[:5]}")
         return q_ids, gold_doc_ids, pred_doc_ids
+
+    def evaluate(self, gold_doc_ids, pred_doc_ids, k=None):
+        k = k if k is not None else self.k
+        return calc_mean_recall_n_precision(gold_doc_ids=gold_doc_ids, pred_doc_ids=pred_doc_ids, k=k, bl_print=True)

@@ -2,11 +2,13 @@
 
 An experiment driven Search Engine Project, developed to index and retrive best documents given a query using ensemble of models. 
 
+
 ## Architecture Diagram
 ### System Design : Search Engine
 ![img.png](static/images/system_architecture.png)
 ### System Design : Ensemble Model
 ![img.png](static/images/ensemble_system_design.png)
+
 
 ## Retirval Models
   - Filter Modelss
@@ -16,7 +18,6 @@ An experiment driven Search Engine Project, developed to index and retrive best 
      - MPNET
      - RoBERTa
   
- 
 ## Project Plan
 
  - [X] Phase 1

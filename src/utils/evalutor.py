@@ -67,5 +67,6 @@ def plot_precision_and_recall_curve(gold_doc_ids, preds_doc_ids, max_k=50):
     fig, ax = plt.subplots(1)
     ax.plot(ks, rs, label="Mean Recall", color='C2', lw=3, alpha=1)
     ax.plot(ks, ps, label="Mean Precision", color='C3', lw=3, alpha=1)
+    ax.set(xlabel="K", ylabel="Metric")
     ax.legend()
     plt.tight_layout()

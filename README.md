@@ -1,6 +1,6 @@
 # TF4ces Search Engine
 
-An experiment driven Search Engine Project, developed to index and retrive best documents given a query using ensemble of models. 
+An experiment driven Search Engine Project, developed to index and retrieve best documents given a query using ensemble of models. 
 
 
 ## Architecture Diagram
@@ -10,8 +10,8 @@ An experiment driven Search Engine Project, developed to index and retrive best 
 ![img.png](static/images/ensemble_system_design.png)
 
 
-## Retirval Models
-  - Filter Modelss
+## Retrieval Models
+  - Filter Models
       - BM25
       - TF-IDF
  - Voter Models

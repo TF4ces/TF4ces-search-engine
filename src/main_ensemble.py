@@ -101,14 +101,20 @@ class TF4cesSearchEnsemble:
         self.rel_doc_ids[model_name] = pred_doc_ids
         return self.q_ids, self.rel_doc_ids[model_name]
 
-    @staticmethod
-    def read_embeddings(doc_ids, emb_path, model_name):
+    def read_embeddings(self, doc_ids, emb_path, model_name):
         embds = list()
+        if not emb_path.exists(): emb_path.mkdir(parents=True, exist_ok=True)
 
         # Load embeddings from disk, for given doc_ids.
         for id in tqdm(doc_ids, desc=f"Voting Model [{model_name}] : Loading Embeddings"):
             path = emb_path / f"{id}.npy"
-            embds.append(np.load(path))
+            try:
+                embds.append(np.load(path))
+
+            except FileNotFoundError:
+                raw_document = self.docs_obj[id]['document']
+                self.voter_models[model_name].get_batched_embeddings(doc_ids=[id], raw_documents=[raw_document], emb_path=emb_path, cache=True)
+                embds.append(np.load(path))
 
         return embds
 

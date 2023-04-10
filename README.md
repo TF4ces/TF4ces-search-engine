@@ -50,7 +50,7 @@ An experiment driven Search Engine Project, developed to index and retrieve best
     ```console
     $ python3 -m venv venv
     $ source venv/bin/activate
-    $ pip -r requirements.txt
+    $ pip install -r src/requirements.txt 
     ```
     
 3. Download pre-loaded embeddings to this path: `./dataset/embeddings_test` from [GDrive](https://drive.google.com/file/d/1x-lOZMwBK5Ea9eCDE18gQCTnukZ16xQT/view?usp=share_link)

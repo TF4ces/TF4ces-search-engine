@@ -44,8 +44,8 @@ if __name__ == '__main__':
     VOTING_TOP_N = 100
 
     FILTER_MODEL = {
-        TFIDF_MODEL: {'model_path': TFIDF_MODEL_PATH},
-        # BM25_MODEL: {'model_path': None},
+        #TFIDF_MODEL: {'model_path': TFIDF_MODEL_PATH},
+        BM25_MODEL: {'model_path': None},
     }
     VOTER_MODELS = {
         MPNET_MODEL: {'emb_path': MPNET_EMB_PATH},
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     ensemble.summary()
 
     # Step 3: Load models
-    ensemble.load_filter_model(bl_train=False)
+    ensemble.load_filter_model(bl_train=True)
     ensemble.load_voter_models()
 
     # Step 4: Filter Model predictions

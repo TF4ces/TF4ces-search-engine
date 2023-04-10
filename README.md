@@ -4,14 +4,18 @@ An experiment driven Search Engine Project, developed to index and retrive best 
 
 
 ## Architecture Diagram
-![image](https://user-images.githubusercontent.com/30720979/226012153-3852c59c-a3cb-4869-bcf1-8555999125eb.png)
-
+### System Design : Search Engine
+![img.png](static/images/system_architecture.png)
+### System Design : Ensemble Model
+![img.png](static/images/ensemble_system_design.png)
 
 ## Retirval Models
-  - BM25
-  - TF-IDF
-  - BERT
-  - ColBERT
+  - Filter Modelss
+      - BM25
+      - TF-IDF
+ - Voter Models
+     - MPNET
+     - RoBERTa
   
  
 ## Project Plan
@@ -32,8 +36,9 @@ An experiment driven Search Engine Project, developed to index and retrive best 
   
 ## Future works
 
-TODO
-  
+ - [ ] Finetune ColBERT
+ - [ ] Implement Clustering of docs
+
 ## How to run Project
 
 1. Clone repository
@@ -60,8 +65,7 @@ TODO
    1. Run Eval Pipeline from [this](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
    2. Run prediction Demo Pipeline from [this](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.
 
-
-
+   
 ## Contributors
 
 - [Mohammed Ataaur Rahaman](https://github.com/ataago)

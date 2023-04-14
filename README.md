@@ -63,7 +63,7 @@ Note : The project was tested on linux and MacOS. (Windows has dependency issues
    **WARNING**: use a GPU machine and it is expected to take 1hr to generate.
 
 
-3. Run TF4ces Search Engine [install jupyter by `pip install jupyter notebook` and to run `jupyter notebook`]
+3. Run TF4ces Search Engine [$install jupyter by `pip install jupyter notebook` and to run `$jupyter notebook`]
       
    1. Run Eval Pipeline from [./tests/notebooks/TF4ces_Search_Eval.ipynb](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
    2. Run prediction Demo Pipeline from [./tests/notebooks/TF4ces_Search_Demo.ipynb](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.

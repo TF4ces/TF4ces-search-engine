@@ -62,8 +62,8 @@ An experiment driven Search Engine Project, developed to index and retrieve best
 
 3. Run TF4ces Search Engine
       
-   1. Run Eval Pipeline from [this](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
-   2. Run prediction Demo Pipeline from [this](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.
+   1. Run Eval Pipeline from [./tests/notebooks/TF4ces_Search_Eval.ipynb](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
+   2. Run prediction Demo Pipeline from [./tests/notebooks/TF4ces_Search_Demo.ipynb](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.
 
    
 ## Contributors

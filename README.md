@@ -49,7 +49,8 @@ An experiment driven Search Engine Project, developed to index and retrieve best
 2. Setup Environment repository
     ```console
     $ python3 -m venv venv
-    $ source venv/bin/activate
+    $ source venv/bin/activate                [LINUX/MAC]
+    $ .\venv\Scripts\activate                 [WINDOWS]
     $ pip install -r src/requirements.txt 
     ```
     

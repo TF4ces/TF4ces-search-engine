@@ -65,6 +65,15 @@ An experiment driven Search Engine Project, developed to index and retrieve best
    1. Run Eval Pipeline from [./tests/notebooks/TF4ces_Search_Eval.ipynb](./tests/notebooks/TF4ces_Search_Eval.ipynb) ipynb notebook.
    2. Run prediction Demo Pipeline from [./tests/notebooks/TF4ces_Search_Demo.ipynb](./tests/notebooks/TF4ces_Search_Demo.ipynb) ipynb notebook.
 
+
+### Troubleshooting :
+
+1. **Windows Systems are seen to have issue while reading data with ir-datasets==0.4.1**
+      
+      For windows the doc.iter might throw decoding error while reading tsv file,
+      You would need to change the encoding in source files of dependency as per this issue.
+  
+      Issue : https://github.com/allenai/ir_datasets/issues/208#issuecomment-1235944338    
    
 ## Contributors
 

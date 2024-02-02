@@ -76,11 +76,4 @@ Note : The project was tested on linux and MacOS. (Windows has dependency issues
       For windows the doc.iter might throw decoding error while reading tsv file,
       You would need to change the encoding in source files of dependency as per this issue.
   
-      Issue : https://github.com/allenai/ir_datasets/issues/208#issuecomment-1235944338    
-   
-## Contributors
-
-- [Mohammed Ataaur Rahaman](https://github.com/ataago)
-- [Edmund Lepre](https://github.com/edmundlepre)
-- [Arvind Jadhav](https://github.com/Arvind-AI-7)
-- [Ayushi Choudhury](https://github.com/Ayushi231)
+      Issue : https://github.com/allenai/ir_datasets/issues/208#issuecomment-1235944338
